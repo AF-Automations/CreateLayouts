@@ -172,3 +172,5 @@ $RECYCLE.BIN/
 *.cache
 CreateLayouts/CreateLayouts/obj/Debug/CreateLayouts.csprojAssemblyReference.cache
 CreateLayouts/CreateLayouts/obj/Debug/CreateLayouts.csproj.FileListAbsolute.txt
+/CreateLayouts/CreateLayouts/obj/Debug/CreateLayouts.csproj.FileListAbsolute.txt
+/CreateLayouts/CreateLayouts/obj/Debug/DesignTimeResolveAssemblyReferencesInput.cache
