@@ -55,7 +55,7 @@ namespace CreateLayouts
                 using (Transaction tr = db.TransactionManager.StartTransaction())
                 {
                     UcsTable lt = tr.GetObject(db.UcsTableId, OpenMode.ForRead) as UcsTable;
-                    Editor ed = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument.Editor;
+                    Editor ed = AcadApp.DocumentManager.MdiActiveDocument.Editor;
                     try
                     {
                         if (lt.Has(UCSName))
