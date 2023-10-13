@@ -95,11 +95,18 @@
     <None Include="PackageContents.xsd">
       <SubType>Designer</SubType>
     </None>
+    <None Include="Resources\ContainsDrawingBorder.dwg" />
+    <None Include="Resources\VIEWPORT-Block.dwg" />
     <None Include="start.scr" />
     <None Include="VIEWPORT-Block.dwg" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BlockHelperClass.cs" />
+    <Compile Include="CompBuilder\CompBldr.cs" />
+    <Compile Include="CompBuilder\CompBldrAnonBlkDef.cs" />
+    <Compile Include="CompBuilder\CompBldrCurSpace.cs" />
+    <Compile Include="CompBuilder\CompBldrNamedBlkDef.cs" />
+    <Compile Include="CompBuilder\TransactionHelper.cs" />
     <Compile Include="DBUtils.cs" />
     <Compile Include="InsertBlockJig.cs" />
     <Compile Include="Jobdetails.cs" />
@@ -117,6 +124,15 @@
     <Compile Include="myCommands.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UCSTools.cs" />
+    <Compile Include="Utils\AcadUI.cs" />
+    <Compile Include="Utils\ColumnSorterString.cs" />
+    <Compile Include="Utils\Db.cs" />
+    <Compile Include="Utils\Dialog.cs" />
+    <Compile Include="Utils\Ge.cs" />
+    <Compile Include="Utils\JigPline.cs" />
+    <Compile Include="Utils\ObjectCompare.cs" />
+    <Compile Include="Utils\ReferenceFiler.cs" />
+    <Compile Include="Utils\SymTbl.cs" />
     <Compile Include="Vports.cs" />
     <Compile Include="ZoomCommands.cs" />
   </ItemGroup>
@@ -166,6 +182,7 @@ if exist "%25Allusersprofile%25\Autodesk\ApplicationPlugins\$(projectname).bundl
 if not exist "%25Allusersprofile%25\Autodesk\ApplicationPlugins\$(projectname).bundle\Contents\Resources\" mkdir "%25Allusersprofile%25\Autodesk\ApplicationPlugins\$(projectname).bundle\Contents\Resources\"
 xcopy /y "$(ProjectDir)PackageContents.xml" "%25Allusersprofile%25\Autodesk\ApplicationPlugins\$(projectname).bundle\"
 xcopy "$(TargetDir)*.*" "%25Allusersprofile%25\Autodesk\ApplicationPlugins\$(projectname).bundle\Contents\" /Y /R
+xcopy /y "$(ProjectDir)\Resources\*.dwg" "%25Allusersprofile%25\Autodesk\ApplicationPlugins\$(projectname).bundle\Contents\Resources\"
 xcopy /y "$(ProjectDir)$(projectname).ico" "%25Allusersprofile%25\Autodesk\ApplicationPlugins\$(projectname).bundle\Contents\Resources\"
 xcopy /y "$(ProjectDir)$(projectname).htm" "%25Allusersprofile%25\Autodesk\ApplicationPlugins\$(projectname).bundle\Contents\Resources\"</PostBuildEvent>
   </PropertyGroup>

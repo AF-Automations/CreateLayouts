@@ -256,27 +256,236 @@ namespace CreateLayouts
 
         private void EverythingIsNew()
         {
-            throw new NotImplementedException();
+            detailslist = new List<Jobdetails>();
+            LayoutList = new List<Layouts>();
+            vport = new List<Vports>();
+            ExistingvportList = new List<Vports>();
+            blockdict = new Dictionary<int, ObjectId>();
+            Floors = new ArrayList();
+            kpdict = new Dictionary<string, ObjectId>();
         }
 
         private void EverythingIsNull()
         {
-            throw new NotImplementedException();
+            detailslist = null;
+            LayoutList = null;
+            vport = null;
+            ExistingvportList = null;
+            blockdict = null;
+            Floors = null;
+            kpdict = null;
         }
 
         private void BeginCreateLayouts(Dictionary<string, ObjectId> kpdict)
         {
-            throw new NotImplementedException();
+            foreach (KeyValuePair<int, ObjectId> kvpblock in blockdict)
+            {
+                Vports vportitem = (from Vports n in ExistingvportList
+                                    where n.blockid == kvpblock.Value
+                                    select n).Single();
+                LayoutCommands.CreateNewLayouts(detailslist, kvpblock.Value, LayoutCommands.SetupNewViewports(vportitem, ISPOSP, vportitem.blockid, vportitem.vpNumber, vportitem.UCSName));
+                vportitem = null;
+            }
         }
 
-        private void SetupNewLayoutDetails()
+        private List<Jobdetails> SetupNewLayoutDetails()
         {
-            throw new NotImplementedException();
+            PromptResult res = null;
+            Jobdetails details = new Jobdetails();
+            Boolean SITENumNotDefault = false;
+            //SiteNo.
+            do
+            {
+                PromptStringOptions Sitepso = new PromptStringOptions("\nWhat is the Site Number?");
+                Sitepso.DefaultValue = "1234";
+                res = ed.GetString(Sitepso);
+                if (res.Status == PromptStatus.OK)
+                {
+                    if (res.StringResult != "1234")
+                    {
+                        details.SiteNo = res.StringResult;
+                        SITENumNotDefault = true;
+                    }
+                    else
+                    {
+                        System.Windows.Forms.MessageBox.Show("Please select a value other than the default!");
+                    }
+                }
+            } while (SITENumNotDefault != true);
+            //BuildingNo.
+            Boolean BLDGNumNotDefault = false;
+            do
+            {
+                if (ISPOSP != 1) // this drawing is ISP!
+                {
+                    PromptStringOptions BLDGpso = new PromptStringOptions("\nWhat is the Building Number?");
+
+                    BLDGpso.DefaultValue = "2345";
+                    BLDGpso.AllowSpaces = false;
+                    res = ed.GetString(BLDGpso);
+                    if (res.Status == PromptStatus.OK)
+                    {
+                        if (res.StringResult != "2345")
+                        {
+                            BLDGNumNotDefault = true;
+                            details.BuildingNo = res.StringResult;
+                        }
+                        else
+                        {
+                            System.Windows.Forms.MessageBox.Show("Please select a value other than the default!");
+                        }
+                    }
+                }
+            } while (BLDGNumNotDefault != true);
+
+
+            //Date.
+            PromptStringOptions datepso = new PromptStringOptions("\nPlease state the date the drawing is to be issued to the client!");
+            datepso.DefaultValue = DateTime.Now.ToString("yyyy-MM-dd");
+
+            res = ed.GetString(datepso);
+            if (res.Status == PromptStatus.OK)
+            {
+                // assign a new date value!
+                details.Datestr = res.StringResult;
+            }
+
+            //Username (Initials)
+            PromptStringOptions userpso = new PromptStringOptions("\nPlease input your initials:");
+            string userinitials = Environment.UserName;
+            string username = userinitials.Substring(0, 2);
+            //Need to insert the same filtering we used in the vba adaptation of this code! 2009-01-09 AF
+            userpso.DefaultValue = username.ToUpper();
+
+            res = ed.GetString(userpso);
+            if (res.Status == PromptStatus.OK)
+            {
+                // assign a new date value!
+                details.Initials = res.StringResult;
+            }
+            //stores the values gathered above.
+            detailslist.Add(details);
+            return detailslist;
         }
 
         private Dictionary<int, ObjectId> GetListofInsertedBlocks(string blockName, bool v)
         {
-            throw new NotImplementedException();
+            //need to "new" the collections otherwise we get a fatal error!
+            Dictionary<int, ObjectId> blockids = new Dictionary<int, ObjectId>();
+            ObjectIdCollection count = new ObjectIdCollection();
+            Document tmpdoc = AcadApp.DocumentManager.MdiActiveDocument;
+            Database db = tmpdoc.Database;
+            //if we don't make a new list every time this is run, we end up with duplicate entries.
+            ExistingvportList = new List<Vports>();
+            int i = 1;
+            string UCSName = "";
+            Point3d BlockPos = new Point3d(0, 0, 0);
+            Scale3d BlockScale = new Scale3d(1);
+            Double BlockAngle = 0;
+            BlockReference blkRef = null;
+            using (Transaction tr = db.TransactionManager.StartTransaction())
+            {
+            getblocks:
+                BlockTable bt = tr.GetObject(db.BlockTableId, OpenMode.ForRead, false) as BlockTable;
+                BlockTableRecord btr = null;
+                try
+                {
+                    btr = (BlockTableRecord)tr.GetObject(bt[BlockName], OpenMode.ForRead);
+                }
+                catch (Autodesk.AutoCAD.Runtime.Exception ex)
+                {
+                    if (ex.ErrorStatus == ErrorStatus.KeyNotFound)
+                    {
+                        BlockHelperClass.ImportBlocks();
+                        goto getblocks;
+                    }
+                }
+                count = DBUtils.GetBlockReferenceIds(btr.ObjectId);
+                foreach (ObjectId blockrefid in count)
+                {
+                    blockids.Add(i, blockrefid);
+                    i++;
+                    #region "Work with BlockReferences"
+                    // and then extract/store the information we need!
+                    Vports Existingvport = new Vports();
+                    blkRef = tr.GetObject(blockrefid, OpenMode.ForRead, false) as BlockReference;
+                    BlockPos = blkRef.Position;
+                    BlockScale = blkRef.ScaleFactors;
+                    BlockAngle = blkRef.Rotation;
+                    Existingvport.blockid = blockrefid;
+                    //Dynamic Block commands:
+                    DynamicBlockReferencePropertyCollection DynpropsCol = blkRef.DynamicBlockReferencePropertyCollection;
+                    foreach (DynamicBlockReferenceProperty DynpropsRef in DynpropsCol)
+                    {
+                        string DynPropsName = DynpropsRef.PropertyName.ToUpper();
+                        switch (DynPropsName)
+                        {
+                            case "LOOKUP":
+                                Existingvport.PageSize = Convert.ToString(DynpropsRef.Value);
+                                Existingvport.vpVisProp = Convert.ToString(DynpropsRef.Value);
+                                break;
+                        }
+                    }
+                    #region CollectViewportBlockAtts
+                    // fill out the attributes for this block.
+                    //int i = 1;
+                    AttributeCollection attrefids = blkRef.AttributeCollection;
+
+                    foreach (ObjectId attrefid in attrefids)
+                    {
+                        AttributeReference attref = tr.GetObject(attrefid, OpenMode.ForWrite, false) as AttributeReference;
+                        //vport = new List<Vports>();
+                        //vport.Capacity = i + 1;
+                        switch (attref.Tag)
+                        {
+                            case "VIEWNO_NONVIS":
+                                Existingvport.vpName = attref.TextString;
+                                Existingvport.vpNumber = Convert.ToInt32(attref.TextString);
+                                break;
+                            case "FULLORPARTIAL":
+                                Existingvport.FullorPartial = attref.TextString;
+                                break;
+                            case "FLOOR":
+                                if (!Floors.Contains(attref.TextString))
+                                {
+                                    Floors.Add(attref.TextString);
+                                }
+                                Existingvport.FloorName = attref.TextString;
+                                break;
+                            case "XLOCATION":
+                                Existingvport.Xaxis = BlockPos.GetVectorTo(attref.Position);
+                                break;
+                            case "YLOCATION":
+                                Existingvport.Yaxis = BlockPos.GetVectorTo(attref.Position);
+                                break;
+                            case "VPSCALE":
+                                Existingvport.vpScale = attref.TextString;
+                                break;
+                            case "VIEWCENTRE":
+                                //Position3d attpos = new Position3d(attref.X,attref.,attref.Z);
+                                Existingvport.vpMSCentrePoint = new Point2d(attref.Position.X, attref.Position.Y);
+                                break;
+                            case "":
+                                break;
+                        }
+                        //get ready to add the next entries.
+
+                        // i++;
+                    }
+                    //blockdict.Add(i, Existingvport.blockid);
+                    //i++;
+                    //if (FirstTime)
+                    //{
+                    UCSName = "UCS_" + Existingvport.vpNumber;
+                    Existingvport.UCSName = UCSTools.GetorCreateUCS(UCSName, BlockPos, Existingvport.Xaxis, Existingvport.Yaxis);
+                    //}
+                    ExistingvportList.Add(Existingvport);
+                    Existingvport = null;
+                    #endregion //EditViewportBlockAtts
+                    #endregion
+                }
+            }
+            return blockids;
         }
 
         //// The CommandMethod attribute can be applied to any public  member 

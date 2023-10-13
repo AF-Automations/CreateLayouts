@@ -4,6 +4,8 @@ using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using System;
+using System.IO;
+using System.Reflection;
 
 namespace CreateLayouts
 {
@@ -60,7 +62,9 @@ namespace CreateLayouts
         public static void ImportBlocks()
         {
             //string ViewportBlockdwg = "C:\\users\\" + Environment.UserName + "\\Desktop\\VIEWPORT-Block.dwg";
-            string ViewportBlockdwg = @"C:\AFAutomations\Github\CreateLayouts\CreateLayouts\CreateLayouts\VIEWPORT-Block.dwg";
+            string AssyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            string ViewportBlockdwg = AssyPath + "\\Resources\\VIEWPORT-Block.dwg";
+
             DocumentCollection dm =
                 Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager;
             Editor ed = dm.MdiActiveDocument.Editor;
