@@ -60,7 +60,7 @@ namespace CreateLayouts
         public static void ImportBlocks()
         {
             //string ViewportBlockdwg = "C:\\users\\" + Environment.UserName + "\\Desktop\\VIEWPORT-Block.dwg";
-            string ViewportBlockdwg = "C:\\Program Files\\CH2M HILL\\CreateLayouts For AutoCAD 2009\\VIEWPORT-Block.dwg";
+            string ViewportBlockdwg = @"C:\AFAutomations\Github\CreateLayouts\CreateLayouts\CreateLayouts\VIEWPORT-Block.dwg";
             DocumentCollection dm =
                 Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager;
             Editor ed = dm.MdiActiveDocument.Editor;
